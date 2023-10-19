@@ -33,9 +33,9 @@ class CanMessage
     public:
         void initialize(void);
         void handler(void);
-        void send_PGN_44(uint8_t transType, uint8_t transAddr);
-        void send_PGN_45(uint8_t transType, uint8_t transAddr);
-        void send_PGN_47(uint8_t transType, uint8_t transAddr);
+		void send_PGN_15(uint8_t transType, uint8_t transAddr);    //RAW ADC
+		void send_PGN_44(uint8_t transType, uint8_t transAddr);    //PWM Status
+        void send_PGN_45(uint8_t transType, uint8_t transAddr);    //Temperatures 
 //        void Transmit(uint8_t* buf, uint8_t len);
 //        uint8_t getMessage(uint8_t* buf);
 //        void printLog(char *str);
@@ -43,7 +43,7 @@ class CanMessage
     private:
         void Process(uint32_t AID, uint8_t AD0, uint8_t AD1, uint8_t AD2, uint8_t AD3, uint8_t AD4, uint8_t AD5, uint8_t AD6, uint8_t AD7);
 
-    uint32_t TimeTransPgn44, TimeTransPgn45, TimeTransPgn47;
+    uint32_t TimeTransPgn15, TimeTransPgn44, TimeTransPgn45;
     uint8_t TempState[4];
 };
 extern CanMessage message;

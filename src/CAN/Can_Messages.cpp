@@ -20,9 +20,9 @@ CanMessage message;
 //=======================================================
 void CanMessage::initialize(void)
 {
-    TimeTransPgn44 = 1000;
-    TimeTransPgn45 = 1100;
-    TimeTransPgn47 = 1200;
+    TimeTransPgn15 = 1000;
+    TimeTransPgn44 = 2000;
+    TimeTransPgn45 = 3000;
 }
 //------------------------------------------
 
@@ -58,17 +58,17 @@ void CanMessage::handler(void)
             }
         }
     }
-    if ((core.getSysTick()-TimeTransPgn44) > 5000) { // ШИМ
+    if ((core.getSysTick()-TimeTransPgn15) > 5000) { // ШИМ
+        TimeTransPgn15 = core.getSysTick();
+        message.send_PGN_15(127, 7);
+    }
+    if ((core.getSysTick()-TimeTransPgn44) > 5000) { // АЦП
         TimeTransPgn44 = core.getSysTick();
         message.send_PGN_44(127, 7);
     }
-    if ((core.getSysTick()-TimeTransPgn45) > 1000) { // АЦП
+    if ((core.getSysTick()-TimeTransPgn45) > 5000) { // температура
         TimeTransPgn45 = core.getSysTick();
         message.send_PGN_45(127, 7);
-    }
-    if ((core.getSysTick()-TimeTransPgn47) > 1000) { // температура
-        TimeTransPgn47 = core.getSysTick();
-        message.send_PGN_47(127, 7);
     }
 }
 //-------------------------------------------------
@@ -149,30 +149,26 @@ void CanMessage::send_PGN_44(uint8_t transType, uint8_t transAddr) // ШИМ нагруз
     TimeTransPgn44 = core.getSysTick();
 }
 //-------------------------------
-void CanMessage::send_PGN_45(uint8_t transType, uint8_t transAddr) // АЦП датчиков
+void CanMessage::send_PGN_15(uint8_t transType, uint8_t transAddr) // АЦП датчиков
 {
     uint16_t L1, L2, L3, L4;
-//    L1 = adc.AdcAverVals[0];
-//    L2 = adc.AdcAverVals[1];
-//    L3 = adc.AdcAverVals[2];
-//    L4 = adc.AdcAverVals[3];
-    L1 = adc.AdcVals[0];
-    L2 = adc.AdcVals[1];
-    L3 = adc.AdcVals[2];
-    L4 = adc.AdcVals[3];
-    can.SendMessage((45<<20)+(transType<<13)+(transAddr<<10)+(can.idType<<3)+can.idAddress, L1>>8,L1, L2>>8,L2, L3>>8,L3, L4>>8,L4);  
-    TimeTransPgn45 = core.getSysTick();
+    L1 = adc.AdcAverVals[chTS1];
+    L2 = adc.AdcAverVals[chTS2];
+    L3 = adc.AdcAverVals[chTS3];
+    L4 = adc.AdcAverVals[chTS4];
+    can.SendMessage((15<<20)+(transType<<13)+(transAddr<<10)+(can.idType<<3)+can.idAddress, L1>>8,L1, L2>>8,L2, L3>>8,L3, L4>>8,L4);  
+    TimeTransPgn15 = core.getSysTick();
 }
 //-------------------------------
-void CanMessage::send_PGN_47(uint8_t transType, uint8_t transAddr) // температуры датчиков
+void CanMessage::send_PGN_45(uint8_t transType, uint8_t transAddr) // температуры датчиков
 {
     int16_t T1, T2, T3, T4;
     T1 = adc.Temp1;
     T2 = adc.Temp2;
     T3 = adc.Temp3;
     T4 = adc.Temp4;
-    can.SendMessage((47<<20)+(transType<<13)+(transAddr<<10)+(can.idType<<3)+can.idAddress, T1>>8,T1, T2>>8,T2, T3>>8,T3, T4>>8,T4); 
-    TimeTransPgn47 = core.getSysTick();
+    can.SendMessage((45<<20)+(transType<<13)+(transAddr<<10)+(can.idType<<3)+can.idAddress, T1>>8,T1, T2>>8,T2, T3>>8,T3, T4>>8,T4); 
+    TimeTransPgn45 = core.getSysTick();
 }
 //-------------------------------
 
