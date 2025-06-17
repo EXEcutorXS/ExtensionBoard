@@ -24,6 +24,7 @@ void Can::initialize(void)
     // Enable the Clock
     rcu_periph_clock_enable(RCU_CAN0);
     rcu_periph_clock_enable(RCU_GPIOB);
+	rcu_periph_clock_enable(RCU_GPIOC);
     rcu_periph_clock_enable(RCU_AF);
     rcu_periph_clock_enable(RCU_PMU);
     
@@ -32,8 +33,11 @@ void Can::initialize(void)
     // Configure the CAN pin
     gpio_init(GPIOB, GPIO_MODE_AF_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_9); // CAN TX
     gpio_init(GPIOB, GPIO_MODE_IPU, GPIO_OSPEED_50MHZ, GPIO_PIN_8); // |CAN RX
+	gpio_init(GPIOC, GPIO_MODE_OUT_PP, GPIO_OSPEED_50MHZ, GPIO_PIN_13); // |CAN RX
     gpio_pin_remap_config(GPIO_CAN_PARTIAL_REMAP, ENABLE);
     
+	gpio_bit_reset(GPIOC,GPIO_PIN_13);
+	
     can_parameter_struct canInitStruct;
     can_struct_para_init(CAN_INIT_STRUCT, &canInitStruct);
     //Configure CAN

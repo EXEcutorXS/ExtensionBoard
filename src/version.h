@@ -7,11 +7,11 @@
     #define VER_PRODUCT_TYPE        37
     #define VER_VOLTAGE             0
     #define VER_PRODUCT_SUBTYPE     3
-    #define VER_ASSEMBLAGE_NUMBER   2
+    #define VER_ASSEMBLAGE_NUMBER   3
                                        //дата создани€ версии
-    #define VER_DAY                22  //день
-    #define VER_MONTH              9  //мес€ц
-    #define VER_YEAR               23  //год (последние две цифры)
+    #define VER_DAY                17  //день
+    #define VER_MONTH              6  //мес€ц
+    #define VER_YEAR               25  //год (последние две цифры)
     
     #define DATA_OFFSET                 0xBFFC
 

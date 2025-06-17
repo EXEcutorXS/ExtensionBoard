@@ -32,6 +32,7 @@ void ADCmodule::initialize(void)                                      // ИНИЦИАЛ
 
     // настройка портов аналогового ввода
     rcu_periph_clock_enable(RCU_GPIOA);
+	rcu_periph_clock_enable(RCU_GPIOB);
     rcu_periph_clock_enable(RCU_ADC0);
     rcu_periph_clock_enable(RCU_DMA0);
     rcu_adc_clock_config(RCU_CKADC_CKAPB2_DIV2);
@@ -46,6 +47,11 @@ void ADCmodule::initialize(void)                                      // ИНИЦИАЛ
     gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_4); // MCU_AI1
     gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_6); // Voltage
     
+	//Enabling pullup for NTC sensors
+    gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_3); //sens 1K
+	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_7); //sens 10k
+	gpio_bit_reset(GPIOB, GPIO_PIN_7);//sens 10k for NTC
+	
     // Настраиваем АЦП
     adc_resolution_config(ADC0 , ADC_RESOLUTION_12B);
     adc_mode_config(ADC_MODE_FREE);
@@ -111,7 +117,11 @@ void ADCmodule::enable(void)
     gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_3);
     gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_4);
     gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_6);
-
+	
+	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_3); //sens 1K
+	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_7); //sens 10k
+	
+	gpio_bit_reset(GPIOB, GPIO_PIN_7);//sens 10k for NTC
   
     dma_interrupt_enable(DMA0, DMA_CH0, DMA_INT_FTF);
     dma_channel_enable(DMA0, DMA_CH0);
