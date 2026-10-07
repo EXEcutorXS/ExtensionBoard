@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 
 #ifndef __CORE_H
@@ -22,11 +22,8 @@ class Core
         void initialize(void);
         void SystemCoreClockInit(void);
         void systick_config(void);
-        void delay_1ms(uint32_t count);
-        void delay_decrement(void);
         uint32_t getSysTick(void);
         volatile uint32_t msTick;
-        volatile uint32_t delay;
     
     private:
         

@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 #ifndef __CONFIG_H
 #define __CONFIG_H
@@ -13,27 +13,27 @@
 #include "gd32f30x.h"
 
 #define CONFIG_PAGE_SIZE  0x800
-#define CONFIG_START_ADDR 0x801E800                                //с какого адреса записываются настройки
-#define CONFIG_END_ADDR   CONFIG_START_ADDR + CONFIG_PAGE_SIZE     //до какого адреса записываются настройки
+#define CONFIG_START_ADDR 0x801E800                                //СЃ РєР°РєРѕРіРѕ Р°РґСЂРµСЃР° Р·Р°РїРёСЃС‹РІР°СЋС‚СЃСЏ РЅР°СЃС‚СЂРѕР№РєРё
+#define CONFIG_END_ADDR   CONFIG_START_ADDR + CONFIG_PAGE_SIZE     //РґРѕ РєР°РєРѕРіРѕ Р°РґСЂРµСЃР° Р·Р°РїРёСЃС‹РІР°СЋС‚СЃСЏ РЅР°СЃС‚СЂРѕР№РєРё
 //===========================================================================================================
 class Config
 {
     public:
         void initialize(void);
-        void Erase(void);                                                  //стереть страницу параметров работы
+        void Erase(void);                                                  //СЃС‚РµСЂРµС‚СЊ СЃС‚СЂР°РЅРёС†Сѓ РїР°СЂР°РјРµС‚СЂРѕРІ СЂР°Р±РѕС‚С‹
         void Unlock(void);                                                 
         void Lock(void);
-        uint32_t ReadParameterFlash(uint32_t AName);                       //поиск и считывание определенного значения параметра работы
-        void WriteParameterFlash(uint32_t AName, uint32_t AValue);         //запись имени и значения параметра
-        void ReadAllFromFlash(void);                                       //чтение всех настроек из flash
+        uint32_t ReadParameterFlash(uint32_t AName);                       //РїРѕРёСЃРє Рё СЃС‡РёС‚С‹РІР°РЅРёРµ РѕРїСЂРµРґРµР»РµРЅРЅРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР° СЂР°Р±РѕС‚С‹
+        void WriteParameterFlash(uint32_t AName, uint32_t AValue);         //Р·Р°РїРёСЃСЊ РёРјРµРЅРё Рё Р·РЅР°С‡РµРЅРёСЏ РїР°СЂР°РјРµС‚СЂР°
+        void ReadAllFromFlash(void);                                       //С‡С‚РµРЅРёРµ РІСЃРµС… РЅР°СЃС‚СЂРѕРµРє РёР· flash
         uint32_t ReadFromRAM(uint32_t AName);
-        void WriteToRAM(uint32_t AName, uint32_t AValue);                  //запись одного параметра в ОЗУ
-        void WriteAllToFlash(void);                                        //запись ВСЕХ параметров работы
+        void WriteToRAM(uint32_t AName, uint32_t AValue);                  //Р·Р°РїРёСЃСЊ РѕРґРЅРѕРіРѕ РїР°СЂР°РјРµС‚СЂР° РІ РћР—РЈ
+        void WriteAllToFlash(void);                                        //Р·Р°РїРёСЃСЊ Р’РЎР•РҐ РїР°СЂР°РјРµС‚СЂРѕРІ СЂР°Р±РѕС‚С‹
     private:
 
         uint8_t Instance;
         uint32_t AddressWrite;
-        uint8_t ID[12];   //серийный номер 
+        uint8_t ID[12];   //СЃРµСЂРёР№РЅС‹Р№ РЅРѕРјРµСЂ 
 };
 
 extern Config config;

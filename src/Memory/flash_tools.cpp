@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 /* Includes ------------------------------------------------------------------*/
 #include "flash_tools.h"
@@ -15,8 +15,6 @@ Flash flash;
 void Flash::initialize(void)
 {
     // Next commands may be used in SysClock initialization function. In this case using of FLASH_Init is not obligatorily 
-    ///FLASH_PrefetchBufferCmd(ENABLE);                                 // Enable Prefetch Buffer
-    ///FLASH_SetLatency( FLASH_Latency_1);                              // Flash 2 wait state
 }
 
 //-----------------------------------------------------

@@ -1,20 +1,18 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 #ifndef __CAN_H
 #define __CAN_H
 /* Includes ------------------------------------------------------------------*/
 #include "gd32f30x.h"
 
-#define MSG_BUF_SIZE 10                                      //размер приемного буфера. Не более 255!!! иначе надо везде менять тип
-#define CAN_CONTROL_DEVICE_TYPE   37                         //Тип устройства управления (Пульт, блок управления отопительной системой, стенд, диагностическое оборудование и т.п.)
-#define CAN_ADDRESS_MAX            7                         //Максимально возможный адрес устройства
+#define MSG_BUF_SIZE 10                                      //СЂР°Р·РјРµСЂ РїСЂРёРµРјРЅРѕРіРѕ Р±СѓС„РµСЂР°. РќРµ Р±РѕР»РµРµ 255!!! РёРЅР°С‡Рµ РЅР°РґРѕ РІРµР·РґРµ РјРµРЅСЏС‚СЊ С‚РёРї
 #define CAN_SPEED   250000
 //---------------------------------
 typedef struct {
@@ -27,27 +25,21 @@ class Can
     public:
         void initialize(void);
         void handler(void);
-        void Stop(void);
-        void ChipStandByEnable(void);
-        void ChipStandByDisable(void);
-        void RX0_Interrupt(void);
         void RX1_Interrupt(void);
         void SendMessage(uint32_t AID, uint8_t AD0, uint8_t AD1, uint8_t AD2, uint8_t AD3, uint8_t AD4, uint8_t AD5, uint8_t AD6, uint8_t AD7);
 
-        uint8_t idType;                                              //Тип устройства
-        uint8_t idAddress;                                           //Адрес устройства
-        uint32_t ID;                                                      //Идентификатор сообщения
-        uint8_t noConnectionS;                                       //  если нет связи
-        uint8_t isTrans;
+        uint8_t idType;                                              //РўРёРї СѓСЃС‚СЂРѕР№СЃС‚РІР°
+        uint8_t idAddress;                                           //РђРґСЂРµСЃ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+        uint8_t noConnectionS;                                       //  РµСЃР»Рё РЅРµС‚ СЃРІСЏР·Рё
 
         can_trasnmit_message_struct Can_TxMessage;    
         can_receive_message_struct Can_RxMessage;
-        TReceivedMsg MsgBuf[MSG_BUF_SIZE];                           //Буфер принимаемых сообщений
-        uint8_t transTime[3]; // время на отправку пакета
+        TReceivedMsg MsgBuf[MSG_BUF_SIZE];                           //Р‘СѓС„РµСЂ РїСЂРёРЅРёРјР°РµРјС‹С… СЃРѕРѕР±С‰РµРЅРёР№
+        uint8_t transTime[3]; // РІСЂРµРјСЏ РЅР° РѕС‚РїСЂР°РІРєСѓ РїР°РєРµС‚Р°
             
     private:
         
-        void SaveMessage(void);                                      //Сохранить сообщение RxMessage в буфере MsgBuf
+        void SaveMessage(void);                                      //РЎРѕС…СЂР°РЅРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ RxMessage РІ Р±СѓС„РµСЂРµ MsgBuf
 
 };
 extern Can can;

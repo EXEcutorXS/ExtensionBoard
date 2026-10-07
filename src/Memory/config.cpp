@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 /* Includes ------------------------------------------------------------------*/
 #include "config.h"
@@ -42,18 +42,18 @@ void Config::Lock(void)
     flash.Lock();          
 }  
 //-----------------------------------------------------
-//чтение одного параметра из FLASH
+//С‡С‚РµРЅРёРµ РѕРґРЅРѕРіРѕ РїР°СЂР°РјРµС‚СЂР° РёР· FLASH
 uint32_t Config::ReadParameterFlash(uint32_t AName)
 {
     for (uint32_t Address=CONFIG_START_ADDR; Address<CONFIG_END_ADDR; Address=Address+8) {
         uint32_t V=flash.ReadValue(Address);
-        if (V==0xFFFFFFFF ) return 0xFFFFFFFF;                              //массив закончился
+        if (V==0xFFFFFFFF ) return 0xFFFFFFFF;                              //РјР°СЃСЃРёРІ Р·Р°РєРѕРЅС‡РёР»СЃСЏ
         if (V==AName) return flash.ReadValue(Address+4);
     }
     return 0xFFFFFFFF;
 }
 //-----------------------------------------------------
-//запись одного параметра во flash
+//Р·Р°РїРёСЃСЊ РѕРґРЅРѕРіРѕ РїР°СЂР°РјРµС‚СЂР° РІРѕ flash
 void Config::WriteParameterFlash(uint32_t AName, uint32_t AValue)
 {
     if (AddressWrite>=CONFIG_START_ADDR && AddressWrite<=CONFIG_END_ADDR-8) {
@@ -62,7 +62,7 @@ void Config::WriteParameterFlash(uint32_t AName, uint32_t AValue)
     }
 } 
 //-----------------------------------------------------
-//чтение всех параметров из flash в ОЗУ
+//С‡С‚РµРЅРёРµ РІСЃРµС… РїР°СЂР°РјРµС‚СЂРѕРІ РёР· flash РІ РћР—РЈ
 void Config::ReadAllFromFlash(void)
 {
     uint32_t V;
@@ -84,7 +84,7 @@ void Config::ReadAllFromFlash(void)
     else               { ID[8]=V&0xFF;   ID[9]=(V>>8)&0xFF;  ID[10]=(V>>16)&0xFF; ID[11]=(V>>24)&0xFF; }
 }
 //-----------------------------------------------------
-//чтение одного параметра из ОЗУ
+//С‡С‚РµРЅРёРµ РѕРґРЅРѕРіРѕ РїР°СЂР°РјРµС‚СЂР° РёР· РћР—РЈ
 uint32_t Config::ReadFromRAM(uint32_t AName)
 {
     if (AName==PAR_RVC_INSTANCE) return Instance;
@@ -96,7 +96,7 @@ uint32_t Config::ReadFromRAM(uint32_t AName)
     return 0xFFFFFFFF;
 }
 //-----------------------------------------------------
-//запись одного параметра в ОЗУ
+//Р·Р°РїРёСЃСЊ РѕРґРЅРѕРіРѕ РїР°СЂР°РјРµС‚СЂР° РІ РћР—РЈ
 void Config::WriteToRAM(uint32_t AName, uint32_t AValue)
 {
     if (AName==PAR_RVC_INSTANCE) {
@@ -114,10 +114,10 @@ void Config::WriteToRAM(uint32_t AName, uint32_t AValue)
 
 }
 //-----------------------------------------------------
-//запись ВСЕХ параметров во flash
+//Р·Р°РїРёСЃСЊ Р’РЎР•РҐ РїР°СЂР°РјРµС‚СЂРѕРІ РІРѕ flash
 void Config::WriteAllToFlash(void)
 {
-    Erase();                                                                      //стереть настройки
+    Erase();                                                                      //СЃС‚РµСЂРµС‚СЊ РЅР°СЃС‚СЂРѕР№РєРё
     Unlock();
 
     WriteParameterFlash(PAR_RVC_INSTANCE, Instance);    

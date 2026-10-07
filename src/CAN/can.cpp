@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 /* Includes -------------------------------------------------------*/
 #include "can.h"
@@ -20,7 +20,7 @@ void Can::initialize(void)
 {
     uint32_t idFilter;
     uint32_t idMAsk;
-    idType = VER_PRODUCT_TYPE; // VER_PRODUCT_TYPE;                           //тип устройства                                              //адрес устройства
+    idType = VER_PRODUCT_TYPE; // VER_PRODUCT_TYPE;                           //С‚РёРї СѓСЃС‚СЂРѕР№СЃС‚РІР°                                              //Р°РґСЂРµСЃ СѓСЃС‚СЂРѕР№СЃС‚РІР°
     // Enable the Clock
     rcu_periph_clock_enable(RCU_CAN0);
     rcu_periph_clock_enable(RCU_GPIOB);
@@ -93,60 +93,23 @@ void Can::initialize(void)
     noConnectionS = 0;
 }
 //-------------------------------------------------------------------
-void Can::ChipStandByEnable(void)
-{
-    gpio_bit_set(GPIOA, GPIO_PIN_5); // standby enable
-    
-    gpio_init(GPIOB, GPIO_MODE_IPD ,GPIO_OSPEED_50MHZ, GPIO_PIN_8);// 
-    gpio_exti_source_select(GPIO_PORT_SOURCE_GPIOB, GPIO_PIN_SOURCE_8); // can_rx PB8 as exti8 sourse
-    exti_init(EXTI_8, EXTI_INTERRUPT, EXTI_TRIG_FALLING);
-    exti_interrupt_flag_clear(EXTI_8);
-    exti_interrupt_enable(EXTI_8);
-    nvic_irq_enable(EXTI5_9_IRQn, 1, 1); 
-}
-void Can::ChipStandByDisable(void)
-{
-    exti_interrupt_disable(EXTI_8);
-    nvic_irq_disable(EXTI5_9_IRQn);
-    gpio_bit_reset(GPIOA, GPIO_PIN_5); // standby disable
-    gpio_init(GPIOB, GPIO_MODE_IPU, GPIO_OSPEED_50MHZ, GPIO_PIN_8); // |CAN RX
-}
-//---------------------------------------
-void Can::Stop(void)
-{
-    uint32_t time;
-//    can_transmit_state_enum status;
-    for(uint8_t i = 0; i < 3; i++) {
-        can_transmission_stop(CAN0, i);        
-    }
-    time = core.getSysTick() + 10;
-    while (core.getSysTick() < time) {
-    }
-    can_interrupt_disable(CAN0, CAN_INT_RFNE1); 
-    nvic_irq_disable(CAN0_RX1_IRQn);
-    can_deinit(CAN0);
-}
-//-----------------------------------
 void Can::handler(void)
 {
     static uint32_t TimeoutPeriod;
     static uint32_t noConnection_Tick;
     can_transmit_state_enum status;
-    uint8_t isTrans = 0;
 
     if (core.getSysTick() >= TimeoutPeriod) {
         TimeoutPeriod = core.getSysTick() + 10;
         for(uint8_t i = 0; i < 3; i++) {
             if (transTime[i] > 0) {
                 transTime[i]--;
-                isTrans = 1;
             }
             if (transTime[i] == 1) { 
                 status = can_transmit_states(CAN0, i);
                 if (status != CAN_TRANSMIT_OK) can_transmission_stop(CAN0, i);   
             }
         }
-        can.isTrans = isTrans;
         if (can_error_get(CAN0) != CAN_ERROR_NONE) {
             
             can_flag_clear(CAN0, CAN_FLAG_MAL0); //
@@ -167,7 +130,6 @@ void Can::SendMessage(uint32_t AID, uint8_t AD0, uint8_t AD1, uint8_t AD2, uint8
 {
     uint8_t TransmitMailBox=0;
     
-    //can_transmit_state_enum status;
     
     Can_TxMessage.tx_sfid = 0;                                    /*!< standard format frame identifier */
     Can_TxMessage.tx_efid = AID;                                  /*!< extended format frame identifier */
@@ -185,22 +147,10 @@ void Can::SendMessage(uint32_t AID, uint8_t AD0, uint8_t AD1, uint8_t AD2, uint8
 
     TransmitMailBox = can_message_transmit(CAN0, &Can_TxMessage);
     if (TransmitMailBox < 3) transTime[TransmitMailBox] = 10;
-    /*
-    uint32_t i=0;
-    status = can_transmit_states(CAN0, TransmitMailBox);
-    while(status != CAN_TRANSMIT_OK) {
-        status = can_transmit_states(CAN0, TransmitMailBox);
-        i++;
-        if (i > 60000) {
-            can_transmission_stop(CAN0, TransmitMailBox);
-            break;
-        }
-    } 
-    */
     
 }
 //-------------------------------------------------------------------
-//Сохранить сообщение RxMessage в буфере MsgBuf
+//РЎРѕС…СЂР°РЅРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёРµ RxMessage РІ Р±СѓС„РµСЂРµ MsgBuf
 void Can::SaveMessage(void)
 {
     for(uint8_t i=0; i<MSG_BUF_SIZE; i++) {
@@ -218,23 +168,12 @@ void Can::SaveMessage(void)
 }
 //-------------------------------------------------------------------
 
-//Прерывание по приему CAN
-void Can::RX0_Interrupt(void)
-{
-    if (can_interrupt_flag_get(CAN0, CAN_INT_FLAG_RFL0) == SET) {                  // Прерывание получения пакета в буфер FIFO 0
-                                                                     // Флаг сбрасывается автоматически после прочтения последнего сообщения              
-        can_message_receive(CAN0, CAN_FIFO0, &Can_RxMessage);        // Получим сообщение
-        SaveMessage();
-        can_interrupt_flag_clear(CAN0, CAN_INT_FLAG_RFL0); // receive FIFO0 full interrupt flag
-        
-    }
-
-}
+//РџСЂРµСЂС‹РІР°РЅРёРµ РїРѕ РїСЂРёРµРјСѓ CAN
 void Can::RX1_Interrupt(void)
 {
-    if (can_interrupt_flag_get(CAN0, CAN_INT_FLAG_RFL1) == SET) {                  // Прерывание получения пакета в буфер FIFO 1
-                                                                     // Флаг сбрасывается автоматически после прочтения последнего сообщения
-        can_message_receive(CAN0, CAN_FIFO1, &Can_RxMessage);        // Получим сообщение
+    if (can_interrupt_flag_get(CAN0, CAN_INT_FLAG_RFL1) == SET) {                  // РџСЂРµСЂС‹РІР°РЅРёРµ РїРѕР»СѓС‡РµРЅРёСЏ РїР°РєРµС‚Р° РІ Р±СѓС„РµСЂ FIFO 1
+                                                                     // Р¤Р»Р°Рі СЃР±СЂР°СЃС‹РІР°РµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РїРѕСЃР»Рµ РїСЂРѕС‡С‚РµРЅРёСЏ РїРѕСЃР»РµРґРЅРµРіРѕ СЃРѕРѕР±С‰РµРЅРёСЏ
+        can_message_receive(CAN0, CAN_FIFO1, &Can_RxMessage);        // РџРѕР»СѓС‡РёРј СЃРѕРѕР±С‰РµРЅРёРµ
         SaveMessage();
         can_interrupt_flag_clear(CAN0, CAN_INT_FLAG_RFL1); // receive FIFO1 full interrupt flag
 
@@ -245,10 +184,3 @@ extern "C" void CAN0_RX1_IRQHandler(void)
 {
     can.RX1_Interrupt();
 }   
-             
-//-----------------------------------------------------------------
-extern "C" void EXTI5_9_IRQHandler(void)
-{ // EXTI_8 PB8 CANRX
-    exti_interrupt_flag_clear(EXTI_8);
-    //Can_ChipStandByDisable();
-}

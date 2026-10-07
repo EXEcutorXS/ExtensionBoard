@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 /* Includes ------------------------------------------------------------------*/
 #include "ADCmodule.h"
@@ -19,18 +19,18 @@ ADCmodule::ADCmodule(void)
 
 }
 //-----------------------------------------------------
-void ADCmodule::initialize(void)                                      // ИНИЦИАЛИЗАЦИЯ ПЕРИФЕРИИ
+void ADCmodule::initialize(void)                                      // РРќРР¦РРђР›РР—РђР¦РРЇ РџР•Р РР¤Р•Р РР
 {
     for (uint8_t i = 0; i < NUMB_OF_CHAN; i++) {
-        SumADCch[i] = 0;     // обнуляем массив
-        AdcVals[i] = 0;      // буфер для каналов
-        AdcAverVals[i] = 0;  // буфер для средних значений каналов
+        SumADCch[i] = 0;     // РѕР±РЅСѓР»СЏРµРј РјР°СЃСЃРёРІ
+        AdcVals[i] = 0;      // Р±СѓС„РµСЂ РґР»СЏ РєР°РЅР°Р»РѕРІ
+        AdcAverVals[i] = 0;  // Р±СѓС„РµСЂ РґР»СЏ СЃСЂРµРґРЅРёС… Р·РЅР°С‡РµРЅРёР№ РєР°РЅР°Р»РѕРІ
     }
     cntSum = 0;
     ready_f = false;
     numbMeas = 0;
 
-    // настройка портов аналогового ввода
+    // РЅР°СЃС‚СЂРѕР№РєР° РїРѕСЂС‚РѕРІ Р°РЅР°Р»РѕРіРѕРІРѕРіРѕ РІРІРѕРґР°
     rcu_periph_clock_enable(RCU_GPIOA);
 	rcu_periph_clock_enable(RCU_GPIOB);
     rcu_periph_clock_enable(RCU_ADC0);
@@ -52,7 +52,7 @@ void ADCmodule::initialize(void)                                      // ИНИЦИАЛ
 	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_7); //sens 10k
 	gpio_bit_reset(GPIOB, GPIO_PIN_7);//sens 10k for NTC
 	
-    // Настраиваем АЦП
+    // РќР°СЃС‚СЂР°РёРІР°РµРј РђР¦Рџ
     adc_resolution_config(ADC0 , ADC_RESOLUTION_12B);
     adc_mode_config(ADC_MODE_FREE);
     adc_special_function_config(ADC0, ADC_CONTINUOUS_MODE, ENABLE);        // !
@@ -71,16 +71,13 @@ void ADCmodule::initialize(void)                                      // ИНИЦИАЛ
     adc_external_trigger_source_config(ADC0, ADC_REGULAR_CHANNEL, ADC0_1_2_EXTTRIG_REGULAR_NONE);        // !
     adc_external_trigger_config(ADC0, ADC_REGULAR_CHANNEL, ENABLE);        // !
     
-    adc_tempsensor_vrefint_enable(); // Включаем внутренний датчик температуры процессора // Включаем источник опорного напряжения
+    adc_tempsensor_vrefint_enable(); // Р’РєР»СЋС‡Р°РµРј РІРЅСѓС‚СЂРµРЅРЅРёР№ РґР°С‚С‡РёРє С‚РµРјРїРµСЂР°С‚СѓСЂС‹ РїСЂРѕС†РµСЃСЃРѕСЂР° // Р’РєР»СЋС‡Р°РµРј РёСЃС‚РѕС‡РЅРёРє РѕРїРѕСЂРЅРѕРіРѕ РЅР°РїСЂСЏР¶РµРЅРёСЏ
 
-//    adc_interrupt_disable(ADC0 , ADC_INT_EOC);
-//    adc_interrupt_disable(ADC0 , ADC_INT_EOIC);
     
-    adc_enable(ADC0);                                                           // Включаем АЦП        // !
+    adc_enable(ADC0);                                                           // Р’РєР»СЋС‡Р°РµРј РђР¦Рџ        // !
     adc_calibration_enable(ADC0);
     //adc_dma_mode_enable(ADC0);
 
-//    nvic_irq_enable(ADC0_1_IRQn, 0, 4);
     
     dma_periph_address_config(DMA0, DMA_CH0, (uint32_t)(&ADC_RDATA(ADC0)));
     dma_memory_address_config(DMA0, DMA_CH0, (uint32_t)this->bufDMA);
@@ -96,52 +93,18 @@ void ADCmodule::initialize(void)                                      // ИНИЦИАЛ
     dma_interrupt_enable(DMA0, DMA_CH0, DMA_INT_FTF);
     dma_channel_enable(DMA0, DMA_CH0);
     
-    adc_enable(ADC0);                                                           // Включаем АЦП        // !
-//    adc_calibration_enable(ADC0);
+    adc_enable(ADC0);                                                           // Р’РєР»СЋС‡Р°РµРј РђР¦Рџ        // !
     adc_dma_mode_enable(ADC0);
     adc_software_trigger_enable(ADC0 , ADC_REGULAR_CHANNEL);
     nvic_irq_enable(DMA0_Channel0_IRQn, 1, 3);
 }
 //-----------------------------------------------------
-void ADCmodule::disable(void)
+void ADCmodule::handler(void)                                                 // Р¤РЈРќРљРРЇ РџР•Р РРћР”РР§Р•РЎРљРћР“Рћ РћРџР РћРЎРђ
 {
-    adc_disable(ADC0);
-    rcu_periph_clock_disable(RCU_ADC0);
-    rcu_periph_clock_disable(RCU_DMA0);
-}
-//-----------------------------------------------------
-void ADCmodule::enable(void)
-{
-    gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_1);
-    gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_2);
-    gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_3);
-    gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_4);
-    gpio_init(GPIOA, GPIO_MODE_AIN, GPIO_OSPEED_10MHZ, GPIO_PIN_6);
-	
-	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_3); //sens 1K
-	gpio_init(GPIOB, GPIO_MODE_OUT_PP, GPIO_OSPEED_10MHZ, GPIO_PIN_7); //sens 10k
-	
-	gpio_bit_reset(GPIOB, GPIO_PIN_7);//sens 10k for NTC
-  
-    dma_interrupt_enable(DMA0, DMA_CH0, DMA_INT_FTF);
-    dma_channel_enable(DMA0, DMA_CH0);
-    adc_enable(ADC0);                                                           // Включаем АЦП        // !
+    static uint32_t lastTickCalc=0;                                             // РІСЂРµРјСЏ РЅР° СЂР°СЃС‡РµС‚ РёР·РјРµСЂСЏРµРјС‹С… РІРµР»РёС‡РёРЅ
 
-    adc_calibration_enable(ADC0);
-    adc_dma_mode_enable(ADC0);
-
-    nvic_irq_enable(DMA0_Channel0_IRQn, 1, 3);
-//    NVIC_SetPriority(DMA0_Channel0_IRQn, 2);                                      // разрешаем прерывание
-//    NVIC_EnableIRQ(DMA0_Channel0_IRQn);
-    
-}
-//-----------------------------------------------------
-void ADCmodule::handler(void)                                                 // ФУНКИЯ ПЕРИОДИЧЕСКОГО ОПРОСА
-{
-    static uint32_t lastTickCalc=0;                                             // время на расчет измеряемых величин
-
-    if (core.getSysTick()-lastTickCalc > 1000) {                                   // раз в 250 мсек расчитываем аналоговые величины
-        lastTickCalc=core.getSysTick();                                            // сохраняем настоящее время
+    if (core.getSysTick()-lastTickCalc > 1000) {                                   // СЂР°Р· РІ 250 РјСЃРµРє СЂР°СЃС‡РёС‚С‹РІР°РµРј Р°РЅР°Р»РѕРіРѕРІС‹Рµ РІРµР»РёС‡РёРЅС‹
+        lastTickCalc=core.getSysTick();                                            // СЃРѕС…СЂР°РЅСЏРµРј РЅР°СЃС‚РѕСЏС‰РµРµ РІСЂРµРјСЏ
         if (cntSum == 0) return;
         __disable_irq();       
         for (uint8_t ch = 0; ch < NUMB_OF_CHAN; ch++) {
@@ -151,18 +114,24 @@ void ADCmodule::handler(void)                                                 //
         cntSum = 0;
         __enable_irq();
         
-        static const uint16_t Ion = 3300; // mv
-        
+        // Р РµР°Р»СЊРЅРѕРµ РЅР°РїСЂСЏР¶РµРЅРёРµ РїРёС‚Р°РЅРёСЏ РђР¦Рџ РїРѕ РІРЅСѓС‚СЂРµРЅРЅРµРјСѓ РёСЃС‚РѕС‡РЅРёРєСѓ Vrefint
+        static const uint16_t VrefintMv = 1200; // mv, С‚РёРїРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ Vrefint
+        uint16_t Ion = 3300; // mv, Р·РЅР°С‡РµРЅРёРµ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, РµСЃР»Рё РёР·РјРµСЂРµРЅРёРµ РЅРµРґРѕСЃС‚РѕРІРµСЂРЅРѕ
+        if (AdcAverVals[chURef] > 0) {
+            uint32_t vdda = (uint32_t)VrefintMv * 4095 / AdcAverVals[chURef];
+            if ((vdda >= 2000) && (vdda <= 3600)) Ion = (uint16_t)vdda;
+        }
+
         uint16_t val = (uint32_t)AdcAverVals[chTcpu] * Ion/4095;
-        Tcpu = (int8_t)(((float)(1450 - val)/4.1 + 25.0));//  
+        Tcpu = (int16_t)(((1450.0f - (float)val)/4.1f + 25.0f) * 10.0f); // 0.1 C
                 
-        // тип датчика - NTC
+        // С‚РёРї РґР°С‚С‡РёРєР° - NTC
         Temp1 = calcNTC(AdcAverVals[chTS1], Ion);
         Temp2 = calcNTC(AdcAverVals[chTS2], Ion);
         Temp3 = calcNTC(AdcAverVals[chTS3], Ion);
         Temp4 = calcNTC(AdcAverVals[chTS4], Ion);
         Voltage = calcVoltage(AdcAverVals[chVolt], Ion); 
-        Uref = (uint32_t)AdcAverVals[chTcpu] * Ion/4095;
+        Uref = Ion;
         
         if (!ready_f) {
             numbMeas++;
@@ -173,30 +142,17 @@ void ADCmodule::handler(void)                                                 //
 
 }
 //-----------------------------------------------------
-    // Расчёт напряжения питания Вольт
-uint16_t ADCmodule::calcVoltage(uint16_t adcVal, uint16_t refin)                                 // РАСЧЕТ Напряжения питания
+    // Р Р°СЃС‡С‘С‚ РЅР°РїСЂСЏР¶РµРЅРёСЏ РїРёС‚Р°РЅРёСЏ Р’РѕР»СЊС‚
+uint16_t ADCmodule::calcVoltage(uint16_t adcVal, uint16_t refin)                                 // Р РђРЎР§Р•Рў РќР°РїСЂСЏР¶РµРЅРёСЏ РїРёС‚Р°РЅРёСЏ
 {
-    uint16_t mv = (uint32_t)adcVal*refin*11/4095/100; // 0.1 В
+    uint16_t mv = (uint32_t)adcVal*refin*11/4095/100; // 0.1 Р’
     return mv;
 }
 //------------------------------------------------------
-//float ADCmodule::calcKTY(uint16_t adcVal, uint16_t ref)                                               // РАСЧЕТ ТЕМПЕРАТУРЫ ДТ и ДП
-//{
-//    float u = (float)adcVal*ref/4095.0/1000.0;
-//    
-//    return (float)(u*u*u*36.72-u*u*149.27+u*333-310.15);                                 // квадратичная апроксимация данных датчика из таблицы
-//}
-////------------------------------------------------------
-//float ADCmodule::calcLM(uint16_t adcVal, uint16_t ref)                                               // РАСЧЕТ ТЕМПЕРАТУРЫ ДТ и ДП
-//{
-//    float u = (float)adcVal*ref/4095.0/1000.0;
-//    
-//    return u*2*100 - 273.0;                                                             // линейная апроксимация данных датчика
-//}
 //===============================================================
-// расчет температуры по NTC резистору MF52A103F3950  
-// adcVal - значение АЦП; refin - опорное напряжение в мВ
-// результат расчета град С *10 ( т.е. с шагом 0,1 С )
+// СЂР°СЃС‡РµС‚ С‚РµРјРїРµСЂР°С‚СѓСЂС‹ РїРѕ NTC СЂРµР·РёСЃС‚РѕСЂСѓ MF52A103F3950  
+// adcVal - Р·РЅР°С‡РµРЅРёРµ РђР¦Рџ; refin - РѕРїРѕСЂРЅРѕРµ РЅР°РїСЂСЏР¶РµРЅРёРµ РІ РјР’
+// СЂРµР·СѓР»СЊС‚Р°С‚ СЂР°СЃС‡РµС‚Р° РіСЂР°Рґ РЎ *10 ( С‚.Рµ. СЃ С€Р°РіРѕРј 0,1 РЎ )
 /*
                  Ref +3.3V
                   _
@@ -211,17 +167,17 @@ uint16_t ADCmodule::calcVoltage(uint16_t adcVal, uint16_t refin)                
                  |_|
 
 */
-int16_t ADCmodule::calcNTC(uint16_t adcVal, uint16_t refin)                                 // РАСЧЕТ ТЕМПЕРАТУРЫ ДТ NTC ( в 0,1 С )
+int16_t ADCmodule::calcNTC(uint16_t adcVal, uint16_t refin)                                 // Р РђРЎР§Р•Рў РўР•РњРџР•Р РђРўРЈР Р« Р”Рў NTC ( РІ 0,1 РЎ )
 {
-    float R1 = 10.0; // 10 КОм
-    float R2 = 0.3;  // 300 Ом
+    float R1 = 10.0; // 10 РљРћРј
+    float R2 = 0.3;  // 300 РћРј
     float ref = (float)refin/1000.0;
-    float U = (float)adcVal*ref/4095.0; // напряжение на входе АЦП
+    float U = (float)adcVal*ref/4095.0; // РЅР°РїСЂСЏР¶РµРЅРёРµ РЅР° РІС…РѕРґРµ РђР¦Рџ
     float R = (ref*R1/(ref-U))-R1-R2;
     
-    float temp = -127.0; // обрыв датчика 
+    float temp = -127.0; // РѕР±СЂС‹РІ РґР°С‚С‡РёРєР° 
     if (R < 600.0) {
-        if (R > NTC_table[0]) { // слишком низкая температура 
+        if (R > NTC_table[0]) { // СЃР»РёС€РєРѕРј РЅРёР·РєР°СЏ С‚РµРјРїРµСЂР°С‚СѓСЂР° 
             temp = -60.0;
         } else {
             uint8_t i = 0;
@@ -242,9 +198,9 @@ int16_t ADCmodule::calcNTC(uint16_t adcVal, uint16_t refin)                     
     return (int16_t)(temp*10);                 
 }
 //-----------------------------------------------------
-// В прерывании высчитывается среднее значение по массиву DMA и 
-// полученное значение суммируется в SumADCch[ch] для дальнейшего осреднения
-// в основном цикле за больший период
+// Р’ РїСЂРµСЂС‹РІР°РЅРёРё РІС‹СЃС‡РёС‚С‹РІР°РµС‚СЃСЏ СЃСЂРµРґРЅРµРµ Р·РЅР°С‡РµРЅРёРµ РїРѕ РјР°СЃСЃРёРІСѓ DMA Рё 
+// РїРѕР»СѓС‡РµРЅРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ СЃСѓРјРјРёСЂСѓРµС‚СЃСЏ РІ SumADCch[ch] РґР»СЏ РґР°Р»СЊРЅРµР№С€РµРіРѕ РѕСЃСЂРµРґРЅРµРЅРёСЏ
+// РІ РѕСЃРЅРѕРІРЅРѕРј С†РёРєР»Рµ Р·Р° Р±РѕР»СЊС€РёР№ РїРµСЂРёРѕРґ
 void ADCmodule::Averaging(void)
 {
     uint32_t Sum;
@@ -260,39 +216,7 @@ void ADCmodule::Averaging(void)
     cntSum++;
 }
 //-----------------------------------------------------
-// расчет температуры по NTC резистору B57332V5103F360 на плате
-    
-//float ADCmodule::NTCcalculate(uint16_t adcVal, float refin)
-//{
-//    float Rnom = 10.0; // 10000.0 ОМ 
-//    float ref = (float)refin/1000.0;
-//    float u = (float)adcVal*ref/4095.0;
-//    float div = ref-u;
-//    if (div == 0) div = 0.01;
-//    float R = u*Rnom/(div); // 10 - 10КОм // R = U*R1/(ION-U)
-//    float temp = -55.0;
-//    uint8_t i = 0;
-//    uint8_t lastIndx = (sizeof(NTC_table)/sizeof(NTC_table[0]))-1; 
-//    float a = NTC_table[lastIndx-1];
-//    float b = NTC_table[lastIndx];
-//    
-//    if (R > NTC_table[0]) { // слишком низкая температура или обрыв датчика
-//        temp = -60.0;
-//    } else {
-//        for (i = 0; i < (lastIndx-1); i++) {
-//            a = NTC_table[i];
-//            b = NTC_table[i+1];
-//            if ( (R <= a) && (R >= b) ) {
-//                break;
-//            }
-//        }
-//        float dT = (a-R)*5 / (a-b);
-//        temp = -55.0 + i*5 + dT;
-//    }
-//    return temp;
-//}
-//-----------------------------------------------------
-extern "C" void DMA0_Channel0_IRQHandler(void)                                             // ОБРАБОТКА ПРЕРЫВАНИЯ от DMA
+extern "C" void DMA0_Channel0_IRQHandler(void)                                             // РћР‘Р РђР‘РћРўРљРђ РџР Р•Р Р«Р’РђРќРРЇ РѕС‚ DMA
 {
     if (dma_interrupt_flag_get(DMA0, DMA_CH0, DMA_INT_FLAG_FTF)){
         dma_interrupt_flag_clear(DMA0, DMA_CH0, DMA_INT_FLAG_FTF);

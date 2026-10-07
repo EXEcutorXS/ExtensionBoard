@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 /* Includes -------------------------------------------------------*/
 #include "can.h"
@@ -23,6 +23,7 @@ void CanMessage::initialize(void)
     TimeTransPgn15 = 1000;
     TimeTransPgn44 = 2000;
     TimeTransPgn45 = 3000;
+    for(uint8_t i=0; i<4; i++) TempState[i] = ADCIN_OK;
 }
 //------------------------------------------
 
@@ -31,7 +32,7 @@ void CanMessage::handler(void)
     
     for(uint8_t i=0; i<MSG_BUF_SIZE; i++) {
         if (can.MsgBuf[i].Received_f) {  
-            // обработка принятых сообщений
+            // РѕР±СЂР°Р±РѕС‚РєР° РїСЂРёРЅСЏС‚С‹С… СЃРѕРѕР±С‰РµРЅРёР№
             uint8_t AD[8];
             for(uint8_t k=0; k<8; k++) {
                 AD[k] = can.MsgBuf[i].Msg.rx_data[k];
@@ -41,32 +42,40 @@ void CanMessage::handler(void)
             //return;
         }
     }
-    if (adc.ready_f) // не работаем как кнопка, пока переходные процессы не пройдут
+    if (adc.ready_f) // РЅРµ РїСЂРѕРІРµСЂСЏРµРј Р±РµР· РґР°РЅРЅС‹С…, РїРѕРєР° СѓСЃСЂРµРґРЅС‘РЅРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РЅРµ РіРѕС‚РѕРІС‹
     {
+        bool stateChanged = false;
         for(uint8_t i=0; i < 4; i++) {
-            if (adc.AdcVals[i] <= ADC_LOW_BORDER) {              
-                if (TempState[i] != ADCIN_LOW) 
-                    message.send_PGN_45(127, 7); // передаем значения АЦП
-                TempState[i] = ADCIN_LOW;
-            } else
-            if (adc.AdcVals[i] >= ADC_HIGH_BORDER) {
-                if (TempState[i] != ADCIN_HIGH) 
-                    message.send_PGN_45(127, 7); // передаем значения АЦП
-                TempState[i] = ADCIN_HIGH;
-            } else {
-                TempState[i] = ADCIN_OK;
+            uint16_t v = adc.AdcAverVals[i];   // СѓСЃСЂРµРґРЅС‘РЅРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ, РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ СЂР°Р· РІ СЃРµРєСѓРЅРґСѓ
+            uint8_t state = TempState[i];
+            switch (state) {
+                case ADCIN_LOW:
+                    if (v >= (ADC_LOW_BORDER + ADC_HYSTERESIS)) state = ADCIN_OK;
+                    break;
+                case ADCIN_HIGH:
+                    if (v <= (ADC_HIGH_BORDER - ADC_HYSTERESIS)) state = ADCIN_OK;
+                    break;
+                default:
+                    if (v <= ADC_LOW_BORDER) state = ADCIN_LOW;
+                    else if (v >= ADC_HIGH_BORDER) state = ADCIN_HIGH;
+                    break;
+            }
+            if (state != TempState[i]) {
+                TempState[i] = state;
+                stateChanged = true;
             }
         }
+        if (stateChanged) message.send_PGN_45(127, 7); // РѕРґРЅРѕ СЃРѕРѕР±С‰РµРЅРёРµ РЅР° РІСЃРµ РёР·РјРµРЅРёРІС€РёРµСЃСЏ РґР°С‚С‡РёРєРё
     }
-    if ((core.getSysTick()-TimeTransPgn15) > 5000) { // ШИМ
+    if ((core.getSysTick()-TimeTransPgn15) > 5000) { // РђР¦Рџ
         TimeTransPgn15 = core.getSysTick();
         message.send_PGN_15(127, 7);
     }
-    if ((core.getSysTick()-TimeTransPgn44) > 5000) { // АЦП
+    if ((core.getSysTick()-TimeTransPgn44) > 5000) { // РЁРРњ
         TimeTransPgn44 = core.getSysTick();
         message.send_PGN_44(127, 7);
     }
-    if ((core.getSysTick()-TimeTransPgn45) > 5000) { // температура
+    if ((core.getSysTick()-TimeTransPgn45) > 5000) { // С‚РµРјРїРµСЂР°С‚СѓСЂР°
         TimeTransPgn45 = core.getSysTick();
         message.send_PGN_45(127, 7);
     }
@@ -79,20 +88,27 @@ void CanMessage::Process(uint32_t AID, uint8_t AD0, uint8_t AD1, uint8_t AD2, ui
     uint8_t TransAddr = AID & 7;
     uint32_t V32;
 
+    uint8_t DestType = (AID >> 13) & 127;
+    uint8_t DestAddr = (AID >> 10) & 7;
+    if ((DestType != can.idType) && (DestType != 127)) return; // not our type and not broadcast
+    if ((DestAddr != can.idAddress) && (DestAddr != 7)) return; // not our address and not broadcast
+
     uint32_t newID = (TransType<<13)+(TransAddr<<10)+(can.idType<<3)+can.idAddress;
         switch(PGN) {
-        case 1: //Команды
+        case 1: //РљРѕРјР°РЅРґС‹
                 newID = (2<<20)+(TransType<<13)+(TransAddr<<10)+(can.idType<<3)+can.idAddress;
                 if (((AD0<<8)+AD1) == 22) {//Reset CPU
-                    //ToDo сделать проверку принятых байтов AA 55
-                    if (AD2==0) *(__IO uint32_t*)(NVIC_VECTTAB_RAM+DATA_OFFSET) = 0x0016AA55; //переход к загрузке
-                    if (AD2==1) *(__IO uint32_t*)(NVIC_VECTTAB_RAM+DATA_OFFSET) = 0x001655AA; //остаться в основной программе 
+                    //ToDo СЃРґРµР»Р°С‚СЊ РїСЂРѕРІРµСЂРєСѓ РїСЂРёРЅСЏС‚С‹С… Р±Р°Р№С‚РѕРІ AA 55
+                    if (AD2==0) *(__IO uint32_t*)(NVIC_VECTTAB_RAM+DATA_OFFSET) = 0x0016AA55; //РїРµСЂРµС…РѕРґ Рє Р·Р°РіСЂСѓР·РєРµ
+                    if (AD2==1) *(__IO uint32_t*)(NVIC_VECTTAB_RAM+DATA_OFFSET) = 0x001655AA; //РѕСЃС‚Р°С‚СЊСЃСЏ РІ РѕСЃРЅРѕРІРЅРѕР№ РїСЂРѕРіСЂР°РјРјРµ 
                     NVIC_SystemReset();
+                } else if (((AD0<<8)+AD1) == 0) { // Р—Р°РїСЂРѕСЃ РёРЅС„РѕСЂРјР°С†РёРё РѕР± СѓСЃС‚СЂРѕР№СЃС‚РІРµ: РІРµСЂСЃРёСЏ РІ Р±Р°Р№С‚Р°С… 2..5
+                    can.SendMessage(newID, AD0,AD1,VER_PRODUCT_TYPE,VER_VOLTAGE,VER_PRODUCT_SUBTYPE,VER_ASSEMBLAGE_NUMBER,0xFF,0xFF);
                 } else {
                     can.SendMessage(newID, AD0,AD1,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF);
                 }
             break;
-        case 6: //запрос по PGN
+        case 6: //Р·Р°РїСЂРѕСЃ РїРѕ PGN
            if (((AD0<<8) + AD1) == 18) {
                 newID=(18<<20)+(TransType<<13)+(TransAddr<<10)+(can.idType<<3)+can.idAddress;
                 can.SendMessage(newID, VER_PRODUCT_TYPE,VER_VOLTAGE,VER_PRODUCT_SUBTYPE,VER_ASSEMBLAGE_NUMBER,0xFF,VER_DAY,VER_MONTH,VER_YEAR);               
@@ -100,56 +116,58 @@ void CanMessage::Process(uint32_t AID, uint8_t AD0, uint8_t AD1, uint8_t AD2, ui
                 send_PGN_44(TransType, TransAddr);  
            }
            else {
-               //can.SendMessage((18<<20)+(TransType<<13)+(TransAddr<<10)+(can.idType<<3)+can.idAddress,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF);
            }
           break; 
        
-        case 7: //работа с параметрами конфигурации
+        case 7: //СЂР°Р±РѕС‚Р° СЃ РїР°СЂР°РјРµС‚СЂР°РјРё РєРѕРЅС„РёРіСѓСЂР°С†РёРё
             newID=(7<<20)+(TransType<<13)+(TransAddr<<10)+(can.idType<<3)+can.idAddress;
             switch(AD0) {
-                case MEMORY_0_ERASE://----------------------  0 - стереть конфигурацию
+                case MEMORY_0_ERASE://----------------------  0 - СЃС‚РµСЂРµС‚СЊ РєРѕРЅС„РёРіСѓСЂР°С†РёСЋ
                         config.Erase();
                         can.SendMessage(newID,MEMORY_4_ANSWER,AD0,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF);
                         break;
-                case MEMORY_1_WRITE_TO_RAM://---------------  1 - запись параметра в ОЗУ
+                case MEMORY_1_WRITE_TO_RAM://---------------  1 - Р·Р°РїРёСЃСЊ РїР°СЂР°РјРµС‚СЂР° РІ РћР—РЈ
                         config.WriteToRAM((AD2<<8)+AD3,(AD4<<24)+(AD5<<16)+(AD6<<8)+AD7);
                         can.SendMessage(newID,MEMORY_4_ANSWER,AD0,AD2,AD3,AD4,AD5,AD6,AD7);
                         break;
-                case MEMORY_2_WRITE_ALL_TO_FLASH://---------  2 - запись всех параметров работы во flash
+                case MEMORY_2_WRITE_ALL_TO_FLASH://---------  2 - Р·Р°РїРёСЃСЊ РІСЃРµС… РїР°СЂР°РјРµС‚СЂРѕРІ СЂР°Р±РѕС‚С‹ РІРѕ flash
                         config.WriteAllToFlash();
                         can.SendMessage(newID,MEMORY_4_ANSWER,AD0,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF);
                         break;
-                case MEMORY_3_READ://-----------------------  3 - чтение параметра по номеру
-                        //чтение параметра по принятому имени (номеру)
-                        V32=config.ReadFromRAM((AD2<<8)+AD3);//считали параметр
+                case MEMORY_3_READ://-----------------------  3 - С‡С‚РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ РЅРѕРјРµСЂСѓ
+                        //С‡С‚РµРЅРёРµ РїР°СЂР°РјРµС‚СЂР° РїРѕ РїСЂРёРЅСЏС‚РѕРјСѓ РёРјРµРЅРё (РЅРѕРјРµСЂСѓ)
+                        V32=config.ReadFromRAM((AD2<<8)+AD3);//СЃС‡РёС‚Р°Р»Рё РїР°СЂР°РјРµС‚СЂ
                         can.SendMessage(newID,MEMORY_4_ANSWER,AD0,AD2,AD3,V32>>24,V32>>16,V32>>8,V32);
                         break;
                 default:can.SendMessage(newID,MEMORY_5_ANSWER,AD0,AD2,AD3,0xFF,0xFF,0xFF,0xFF);
             }
         break;
-        case 43:
-            Load.setPower(LOAD1, AD0*256 + AD1);
-            Load.setPower(LOAD2, AD2*256 + AD3);
-            Load.setPower(LOAD3, AD4*256 + AD5);
+        case 43: {
+            const uint8_t pwr[6] = {AD0, AD1, AD2, AD3, AD4, AD5};
+            for (uint8_t ch = 0; ch < 3; ch++) {
+                uint16_t val = (pwr[ch*2] << 8) + pwr[ch*2 + 1];
+                if (val != 0xFFFF) Load.setPower(LOAD1 + ch, val); // 0xFFFF - do not change
+            }
             send_PGN_44(TransType, TransAddr);      
         break;
+        }
     }
         
 }
 //=======================================================
-void CanMessage::send_PGN_44(uint8_t transType, uint8_t transAddr) // ШИМ нагрузок
+void CanMessage::send_PGN_44(uint8_t transType, uint8_t transAddr) // РЁРРњ РЅР°РіСЂСѓР·РѕРє
 {
     uint16_t L1, L2, L3, L4;
     L1 = Load.getPower(LOAD1);
     L2 = Load.getPower(LOAD2);
     L3 = Load.getPower(LOAD3);
-    //L4 = Load.getPower(LOAD4);
+    
     L4 = 0;
     can.SendMessage((44<<20)+(transType<<13)+(transAddr<<10)+(can.idType<<3)+can.idAddress, L1>>8,L1, L2>>8,L2, L3>>8,L3, L4>>8,L4);
     TimeTransPgn44 = core.getSysTick();
 }
 //-------------------------------
-void CanMessage::send_PGN_15(uint8_t transType, uint8_t transAddr) // АЦП датчиков
+void CanMessage::send_PGN_15(uint8_t transType, uint8_t transAddr) // РђР¦Рџ РґР°С‚С‡РёРєРѕРІ
 {
     uint16_t L1, L2, L3, L4;
     L1 = adc.AdcAverVals[chTS1];
@@ -160,7 +178,7 @@ void CanMessage::send_PGN_15(uint8_t transType, uint8_t transAddr) // АЦП датчик
     TimeTransPgn15 = core.getSysTick();
 }
 //-------------------------------
-void CanMessage::send_PGN_45(uint8_t transType, uint8_t transAddr) // температуры датчиков
+void CanMessage::send_PGN_45(uint8_t transType, uint8_t transAddr) // С‚РµРјРїРµСЂР°С‚СѓСЂС‹ РґР°С‚С‡РёРєРѕРІ
 {
     int16_t T1, T2, T3, T4;
     T1 = adc.Temp1;

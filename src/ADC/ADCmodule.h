@@ -7,12 +7,11 @@
 
 /* Defines ------------------------------------------------------------------*/
 #define NUMB_OF_DMA_CYCLE   16
-#define NUMB_OF_CHAN   7                   // количество измеряемых каналов
-#define LEN_ARRAY_DMA   NUMB_OF_CHAN*NUMB_OF_DMA_CYCLE      // длина массива для DMA
+#define NUMB_OF_CHAN   7                   // РєРѕР»РёС‡РµСЃС‚РІРѕ РёР·РјРµСЂСЏРµРјС‹С… РєР°РЅР°Р»РѕРІ
+#define LEN_ARRAY_DMA   NUMB_OF_CHAN*NUMB_OF_DMA_CYCLE      // РґР»РёРЅР° РјР°СЃСЃРёРІР° РґР»СЏ DMA
 
-//#define NUMB_COLD_AVG   100
 //------------------------------------------------------------------------------------
-// таблица сопротивлений MF52A103F3950 Rt (номинал 10 КОм)  от -55 до 115 *С с шагом 5*
+// С‚Р°Р±Р»РёС†Р° СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёР№ MF52A103F3950 Rt (РЅРѕРјРёРЅР°Р» 10 РљРћРј)  РѕС‚ -55 РґРѕ 115 *РЎ СЃ С€Р°РіРѕРј 5*
 //                           -55    -50      -45     -40     -35     -30    -25     -20     -15     -10     -5      0       5       10      15      20     25     30      35
 const float NTC_table[] = { 500.05, 400.81, 340.44, 280.66, 223.84, 159.78,116.02, 87.261, 67.214, 52.35, 40.929, 32.049, 25.149, 19.856, 15.677, 12.485, 10.0,  8.06,   6.533,
 //                              40      45      50      55      60     65      70      75      80      85     90      95      100     105     110     115    120    125    130
@@ -21,13 +20,13 @@ const float NTC_table[] = { 500.05, 400.81, 340.44, 280.66, 223.84, 159.78,116.0
 //-----------------------------------------------------------------------------------
 enum
 {
-    chTS3,                      // Температура IN_AI3
-    chTS4,                      // Температура IN_AI4
-    chTS1,                      // Температура IN_AI2  
-    chTS2,                      // Температура IN_AI1  
-    chVolt,                     // напряжение питания   
-    chTcpu,                     // Температура процессора
-    chURef,                     // Опорное напряжение для АЦП
+    chTS3,                      // РўРµРјРїРµСЂР°С‚СѓСЂР° IN_AI3
+    chTS4,                      // РўРµРјРїРµСЂР°С‚СѓСЂР° IN_AI4
+    chTS1,                      // РўРµРјРїРµСЂР°С‚СѓСЂР° IN_AI2  
+    chTS2,                      // РўРµРјРїРµСЂР°С‚СѓСЂР° IN_AI1  
+    chVolt,                     // РЅР°РїСЂСЏР¶РµРЅРёРµ РїРёС‚Р°РЅРёСЏ   
+    chTcpu,                     // РўРµРјРїРµСЂР°С‚СѓСЂР° РїСЂРѕС†РµСЃСЃРѕСЂР°
+    chURef,                     // РћРїРѕСЂРЅРѕРµ РЅР°РїСЂСЏР¶РµРЅРёРµ РґР»СЏ РђР¦Рџ
 };
 
 /* Classes ------------------------------------------------------------------*/
@@ -38,31 +37,26 @@ class ADCmodule
         ADCmodule(void);
 
         void initialize(void);
-        void disable(void);
-        void enable(void);
         void handler(void);
-        void Averaging(void); // осреднение значений, накопленных в буфере DMA
+        void Averaging(void); // РѕСЃСЂРµРґРЅРµРЅРёРµ Р·РЅР°С‡РµРЅРёР№, РЅР°РєРѕРїР»РµРЅРЅС‹С… РІ Р±СѓС„РµСЂРµ DMA
 
-        uint16_t AdcVals[NUMB_OF_CHAN];          // буфер для каналов
-        uint16_t AdcAverVals[NUMB_OF_CHAN];          // буфер для средних значений каналов
-        uint16_t bufDMA[LEN_ARRAY_DMA];             // Буфер для DMA 
+        uint16_t AdcVals[NUMB_OF_CHAN];          // Р±СѓС„РµСЂ РґР»СЏ РєР°РЅР°Р»РѕРІ
+        uint16_t AdcAverVals[NUMB_OF_CHAN];          // Р±СѓС„РµСЂ РґР»СЏ СЃСЂРµРґРЅРёС… Р·РЅР°С‡РµРЅРёР№ РєР°РЅР°Р»РѕРІ
+        uint16_t bufDMA[LEN_ARRAY_DMA];             // Р‘СѓС„РµСЂ РґР»СЏ DMA 
         int16_t Temp1; // 0.1 C
         int16_t Temp2; // 0.1 C
         int16_t Temp3; // 0.1 C
         int16_t Temp4; // 0.1 C
         uint16_t Voltage;  // 0.1 V
         int16_t Tcpu;  // 0.1 C
-        uint16_t Uref; // mV
+        uint16_t Uref; // mV, РЅР°РїСЂСЏР¶РµРЅРёРµ РїРёС‚Р°РЅРёСЏ РђР¦Рџ (РїРѕ Vrefint)
         bool ready_f;
 
     private:
-        void  checkFault(void);              // ПРОВЕРКА ИЗМЕРЯЕМЫХ ВЕЛИЧИН НА ОШИБКУ
-//        int16_t calcKTY(uint16_t adcVal, uint16_t ref);
-//        int16_t calcLM(uint16_t adcVal, uint16_t ref);
         int16_t calcNTC(uint16_t adcVal, uint16_t ref);
         uint16_t calcVoltage(uint16_t adcVal, uint16_t refin);
         
-        uint32_t SumADCch[NUMB_OF_CHAN];     // здесь суммируются значения ацп
+        uint32_t SumADCch[NUMB_OF_CHAN];     // Р·РґРµСЃСЊ СЃСѓРјРјРёСЂСѓСЋС‚СЃСЏ Р·РЅР°С‡РµРЅРёСЏ Р°С†Рї
         uint16_t cntSum;      
         uint8_t numbMeas;
         

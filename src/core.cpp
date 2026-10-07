@@ -1,11 +1,11 @@
 /******************************************************************************
-* ООО DD-inform
-* Самара
+* РћРћРћ DD-inform
+* РЎР°РјР°СЂР°
 *
-* Программисты: Батырев Е.В.
+* РџСЂРѕРіСЂР°РјРјРёСЃС‚С‹: Р‘Р°С‚С‹СЂРµРІ Р•.Р’.
 *
 * 14.09.2023
-* Описание:
+* РћРїРёСЃР°РЅРёРµ:
 *******************************************************************************/
 
 #include "core.h"
@@ -21,18 +21,18 @@ Core::Core(void)
 //---------------------------------
 void Core::initialize(void)
 {
-    delay = 0;
     msTick = 0;
     SystemCoreClockInit();
+    rcu_periph_clock_enable(RCU_AF);
+    gpio_pin_remap_config(GPIO_SWJ_SWDPENABLE_REMAP, ENABLE); // JTAG РІС‹РєР»СЋС‡РµРЅ, SWD СЂР°Р±РѕС‚Р°РµС‚: PB3, PB4, PA15 СЃС‚Р°Р»Рё РѕР±С‹С‡РЅС‹РјРё GPIO
     nvic_vector_table_set(NVIC_VECTTAB_FLASH, MAIN_PROGRAM_START_ADDRESS - FLASH_BASE);
     pmu_lvd_select(PMU_LVDT_4); // PMU_LVDT_4: voltage threshold is 2.7V
     pmu_ldo_output_select(PMU_LDOVS_LOW);
 }
 //---------------------------------------
-void Core::SystemCoreClockInit(void) // на 16 Мгц
+void Core::SystemCoreClockInit(void) // РЅР° 16 РњРіС†
 {  
     rcu_osci_on(RCU_HXTAL);
-    //rcu_osci_bypass_mode_enable(RCU_HXTAL);
     rcu_lxtal_drive_capability_config(RCU_LXTAL_HIGHDRI); // RCU_LXTAL_LOWDRI // RCU_LXTAL_HIGHDRI
 
     rcu_periph_clock_enable(RCU_PMU);
@@ -42,12 +42,10 @@ void Core::SystemCoreClockInit(void) // на 16 Мгц
     rcu_apb2_clock_config(RCU_APB2_CKAHB_DIV1);
     rcu_apb1_clock_config(RCU_APB1_CKAHB_DIV1);
       
-    if (rcu_osci_stab_wait(RCU_HXTAL) == SUCCESS) { // если внешний кристал
+    if (rcu_osci_stab_wait(RCU_HXTAL) == SUCCESS) { // РµСЃР»Рё РІРЅРµС€РЅРёР№ РєСЂРёСЃС‚Р°Р»
         rcu_pllpresel_config(RCU_PLLPRESRC_HXTAL); // RCU_PLLPRESRC_HXTAL / RCU_PLLPRESRC_IRC48M 
         rcu_predv0_config(RCU_PREDV0_DIV2); // HXTAL_VALUE/2 
-        rcu_system_clock_source_config(RCU_CKSYSSRC_HXTAL);// RCU_CKSYSSRC_IRC8M / RCU_CKSYSSRC_HXTAL / RCU_CKSYSSRC_PLL // работаем на частоте кварца
-        //rcu_pll_config(RCU_PLLSRC_HXTAL_IRC48M, RCU_PLL_MUL6); // RCU_PLLSRC_IRC8M_DIV2 / RCU_PLLSRC_HXTAL_IRC48M            
-        //rcu_hxtal_clock_monitor_enable();   
+        rcu_system_clock_source_config(RCU_CKSYSSRC_HXTAL);// RCU_CKSYSSRC_IRC8M / RCU_CKSYSSRC_HXTAL / RCU_CKSYSSRC_PLL // СЂР°Р±РѕС‚Р°РµРј РЅР° С‡Р°СЃС‚РѕС‚Рµ РєРІР°СЂС†Р°
     } else {
         rcu_osci_off(RCU_HXTAL);
         rcu_osci_bypass_mode_disable(RCU_HXTAL);
@@ -60,15 +58,15 @@ void Core::SystemCoreClockInit(void) // на 16 Мгц
             } else {
                 rcu_osci_off(RCU_PLL_CK); 
                 rcu_system_clock_source_config(RCU_CKSYSSRC_IRC8M);// RCU_CKSYSSRC_IRC8M / RCU_CKSYSSRC_HXTAL / RCU_CKSYSSRC_PLL
-                // не получилось на 16 - работаем на 8
+                // РЅРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ РЅР° 16 - СЂР°Р±РѕС‚Р°РµРј РЅР° 8
             }
         }
         rcu_periph_clock_enable(RCU_GPIOD); 
         rcu_periph_clock_enable(RCU_AF);
         rcu_periph_clock_enable(RCU_PMU);
         gpio_pin_remap_config(GPIO_PD01_REMAP,ENABLE);
-        gpio_init(GPIOD, GPIO_MODE_OUT_PP, GPIO_OSPEED_2MHZ, GPIO_PIN_0); // инициализация неиспользуемых выводов 
-        gpio_init(GPIOD, GPIO_MODE_OUT_PP, GPIO_OSPEED_2MHZ, GPIO_PIN_1); // инициализация неиспользуемых выводов 
+        gpio_init(GPIOD, GPIO_MODE_OUT_PP, GPIO_OSPEED_2MHZ, GPIO_PIN_0); // РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РЅРµРёСЃРїРѕР»СЊР·СѓРµРјС‹С… РІС‹РІРѕРґРѕРІ 
+        gpio_init(GPIOD, GPIO_MODE_OUT_PP, GPIO_OSPEED_2MHZ, GPIO_PIN_1); // РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РЅРµРёСЃРїРѕР»СЊР·СѓРµРјС‹С… РІС‹РІРѕРґРѕРІ 
         gpio_bit_reset(GPIOD, GPIO_PIN_0);
         gpio_bit_reset(GPIOD, GPIO_PIN_1);
     }
@@ -101,32 +99,6 @@ void Core::systick_config(void)
     NVIC_SetPriority(SysTick_IRQn, 1U);
 }
 
-/*!
-    \brief      delay a time in milliseconds
-    \param[in]  count: count in milliseconds
-    \param[out] none
-    \retval     none
-*/
-void Core::delay_1ms(uint32_t count)
-{
-    delay = count;
-
-    while(0U != delay){
-    }
-}
-
-/*!
-    \brief      delay decrement
-    \param[in]  none
-    \param[out] none
-    \retval     none
-*/
-void Core::delay_decrement(void)
-{
-    if (0U != delay){
-        delay--;
-    }
-}
 //=================================
 
 uint32_t Core::getSysTick(void)

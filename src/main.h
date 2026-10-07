@@ -7,7 +7,6 @@
 #include "can.h"
 #include "Can_Messages.h"
 #include "Load.h"
-#include "Control.h"
 #include "version.h"
 #include "Config.h"
 #include "ADCmodule.h"
@@ -18,9 +17,7 @@
 
 
 
-/* Variables ------------------------------------------------------------------*/
 
-#define ALIGN       volatile __attribute__((aligned(0x04)))
 /* Info ------------------------------------------------------------------*/
 
 
